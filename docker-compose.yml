@@ -1,0 +1,11 @@
+services:
+  etheos-dashboard:
+    image: ghcr.io/connor93/etheos-dashboard:latest
+    container_name: etheos-dashboard
+    restart: unless-stopped
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

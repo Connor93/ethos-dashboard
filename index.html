@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Etheos Dashboard</title>
+<meta name="description" content="Server administration dashboard for Etheos">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="login-container">
+  <div class="login-box">
+    <h1>&#x2726; Etheos</h1>
+    <p>Server Dashboard</p>
+    <form id="loginForm">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" autocomplete="username" required>
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" required>
+      <button type="submit">Sign In</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboardScreen" class="dashboard" style="display:none">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h2>&#x2726; Etheos</h2>
+      <small>Server Dashboard</small>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" data-tab="overview"><span class="icon">&#x25A3;</span> Overview</div>
+      <div class="nav-item" data-tab="players"><span class="icon">&#x263A;</span> Players</div>
+      <div class="nav-item" data-tab="maps"><span class="icon">&#x2691;</span> Maps</div>
+      <div class="nav-item" data-tab="guilds"><span class="icon">&#x2694;</span> Guilds</div>
+      <div class="nav-item" data-tab="bans"><span class="icon">&#x26D4;</span> Bans</div>
+      <div class="nav-item" data-tab="reports"><span class="icon">&#x26A0;</span> Reports</div>
+      <div class="nav-item" data-tab="config"><span class="icon">&#x2699;</span> Config</div>
+      <div class="nav-item" data-tab="files"><span class="icon">&#x1F4C1;</span> Files</div>
+      <div class="nav-item" data-tab="commands"><span class="icon">&#x276F;</span> Commands</div>
+      <div class="nav-item" data-tab="chat"><span class="icon">&#x1F4AC;</span> Chat</div>
+      <div class="nav-item" data-tab="playerlogs"><span class="icon">&#x1F50D;</span> Player Logs</div>
+      <div class="nav-item" data-tab="materialtrader"><span class="icon">&#x1F4B0;</span> Material Trader</div>
+      <div class="nav-item" data-tab="audit"><span class="icon">&#x1F6A8;</span> Log Audit</div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user">Logged in as <strong id="currentUser">-</strong></div>
+      <span class="logout" id="logoutBtn">Sign Out</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title"><span class="status-dot online"></span> Server Online</div>
+    <div class="header-meta">
+      <div class="meta-item">Uptime: <span class="meta-value" id="headerUptime">-</span></div>
+      <div class="meta-item">Players: <span class="meta-value" id="headerPlayers">-</span></div>
+      <div class="meta-item">Version: <span class="meta-value" id="headerVersion">-</span></div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <!-- Overview Tab -->
+    <div id="tab-overview" class="tab-content active">
+      <div class="cards" id="overviewCards"><div class="loading-placeholder">Loading overview...</div></div>
+      <div class="log-viewer">
+        <div class="log-viewer-header">
+          <h3>&#x1F4CB; Server Logs</h3>
+          <span class="log-status" id="logStatus">Connecting...</span>
+        </div>
+        <div class="log-viewer-body" id="logBody"><div class="loading-placeholder">Loading logs...</div></div>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h3>Online Players</h3><span class="badge" id="playersCount">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Name</th><th>Level</th><th>Class</th><th>Map</th><th>Guild</th><th>Admin</th><th>HP</th><th>TP</th>
+        </tr></thead><tbody id="overviewPlayers"><tr><td colspan="8"><div class="loading-placeholder">Loading players...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Players Tab -->
+    <div id="tab-players" class="tab-content">
+      <div class="table-container">
+        <div class="table-header"><h3>Online Players (Detailed)</h3><span class="badge" id="playersCountDetail">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Name</th><th>Lv</th><th>Class</th><th>Map</th><th>X,Y</th><th>Admin</th><th>Guild</th>
+          <th>HP</th><th>TP</th><th>STR</th><th>INT</th><th>WIS</th><th>AGI</th><th>CON</th><th>CHA</th>
+          <th>Weight</th><th>Karma</th><th>Home</th><th>Title</th>
+        </tr></thead><tbody id="playersTable"><tr><td colspan="19"><div class="loading-placeholder">Loading players...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Maps Tab -->
+    <div id="tab-maps" class="tab-content">
+      <div class="table-container">
+        <div class="table-header"><h3>Active Maps</h3><span class="badge" id="mapsCount">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Map ID</th><th>Players</th><th>NPCs</th><th>Size</th><th>PK</th>
+        </tr></thead><tbody id="mapsTable"><tr><td colspan="5"><div class="loading-placeholder">Loading maps...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Guilds Tab -->
+    <div id="tab-guilds" class="tab-content">
+      <div class="table-container">
+        <div class="table-header"><h3>Guilds</h3><span class="badge" id="guildsCount">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Tag</th><th>Name</th><th>Members</th><th>Level</th><th>EXP</th><th>Points</th><th>Bank</th>
+        </tr></thead><tbody id="guildsTable"><tr><td colspan="7"><div class="loading-placeholder">Loading guilds...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Bans Tab -->
+    <div id="tab-bans" class="tab-content">
+      <div class="table-container">
+        <div class="table-header"><h3>Active Bans</h3><span class="badge" id="bansCount">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Username</th><th>Setter</th><th>Type</th><th>Expires</th>
+        </tr></thead><tbody id="bansTable"><tr><td colspan="4"><div class="loading-placeholder">Loading bans...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Reports Tab -->
+    <div id="tab-reports" class="tab-content">
+      <div class="table-container">
+        <div class="table-header"><h3>Player Reports</h3><span class="badge" id="reportsCount">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Reporter</th><th>Reported</th><th>Reason</th><th>Time</th>
+        </tr></thead><tbody id="reportsTable"><tr><td colspan="4"><div class="loading-placeholder">Loading reports...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Config Tab -->
+    <div id="tab-config" class="tab-content">
+      <h3 style="margin-bottom:16px">Server Configuration (Read-Only)</h3>
+      <div class="config-grid" id="configGrid"><div class="loading-placeholder">Loading config...</div></div>
+    </div>
+
+    <!-- Files Tab -->
+    <div id="tab-files" class="tab-content">
+      <div class="files-layout">
+        <div class="file-tree" id="fileTree">Loading files...</div>
+        <div class="file-editor-pane">
+          <div class="file-editor-header">
+            <span class="file-name" id="editorFileName">Select a file</span>
+            <div class="file-actions">
+              <button class="rehash-btn" id="rehashBtn">&#x21BB; Rehash</button>
+              <button class="save-btn" id="saveFileBtn" disabled>&#x1F4BE; Save</button>
+            </div>
+          </div>
+          <div class="file-editor" id="fileEditorArea">
+            <div class="file-editor-empty">Select a file from the tree to edit</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commands Tab -->
+    <div id="tab-commands" class="tab-content">
+      <div class="announce-box">
+        <h3>&#x1F4E2; Send Announcement</h3>
+        <p style="color:var(--text-secondary);font-size:.85rem;margin-bottom:10px">Broadcast a message to all online players (same as @ in-game)</p>
+        <div class="announce-row">
+          <input type="text" id="announceMsg" placeholder="Type your announcement...">
+          <button id="announceSendBtn">Send Announcement</button>
+        </div>
+      </div>
+      <div class="cmd-panel">
+        <h3>Quick Commands</h3>
+        <div class="cmd-grid" id="cmdGrid"></div>
+        <h3 style="margin-top:20px">Remap</h3>
+        <div class="cmd-custom" style="margin-top:10px">
+          <input type="number" id="remapId" placeholder="Map ID (blank for current)" min="1">
+          <button id="remapBtn">Remap</button>
+        </div>
+        <h3 style="margin-top:20px">Custom Command</h3>
+        <div class="cmd-custom" style="margin-top:10px">
+          <input type="text" id="customCmd" placeholder="command arg1 arg2 ...">
+          <button id="customCmdBtn">Execute</button>
+        </div>
+        <h3 style="margin-top:20px">Command Log</h3>
+        <div class="cmd-log" id="cmdLog" style="max-height:200px"><div style="color:var(--text-muted)">No commands executed yet.</div></div>
+      </div>
+      <div class="log-viewer" style="margin-top:20px">
+        <div class="log-viewer-header">
+          <h3>&#x1F4CB; Server Logs (Live)</h3>
+          <span class="log-status" id="cmdLogStatus">Synced</span>
+        </div>
+        <div class="log-viewer-body" id="cmdLogBody" style="height:280px"></div>
+      </div>
+    </div>
+
+    <!-- Chat Tab -->
+    <div id="tab-chat" class="tab-content">
+      <div class="chat-panel">
+        <h3>&#x1F4AC; Global Chat</h3>
+        <div class="chat-messages" id="chatMessages">
+          <div style="color:var(--text-muted);padding:20px;text-align:center">No messages yet. Global chat messages will appear here.</div>
+        </div>
+        <div class="chat-input-bar">
+          <select id="chatCharSelect" class="chat-char-select">
+            <option value="">Select character...</option>
+          </select>
+          <input type="text" id="chatInput" placeholder="Type a message...">
+          <button id="chatSendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player Logs Tab -->
+    <div id="tab-playerlogs" class="tab-content">
+      <div class="plog-filters">
+        <div class="plog-filter-group">
+          <label>Date</label>
+          <select id="plogDate"><option value="">Loading...</option></select>
+        </div>
+        <div class="plog-filter-group">
+          <label>Player</label>
+          <input type="text" id="plogPlayer" placeholder="Player name..." style="width:140px">
+        </div>
+        <div class="plog-filter-group">
+          <label>Category</label>
+          <select id="plogCategory">
+            <option value="">All</option>
+            <option value="WARP">WARP</option>
+            <option value="LOGOUT">LOGOUT</option>
+            <option value="XP_GAIN">XP_GAIN</option>
+            <option value="TRADE">TRADE</option>
+            <option value="ITEM_DROP">ITEM_DROP</option>
+            <option value="ITEM_PICKUP">ITEM_PICKUP</option>
+            <option value="ITEM_JUNK">ITEM_JUNK</option>
+            <option value="GIFTBOX">GIFTBOX</option>
+            <option value="SHOP_BUY">SHOP_BUY</option>
+            <option value="SHOP_SELL">SHOP_SELL</option>
+            <option value="SHOP_CRAFT">SHOP_CRAFT</option>
+            <option value="BANK_DEPOSIT">BANK_DEPOSIT</option>
+            <option value="BANK_WITHDRAW">BANK_WITHDRAW</option>
+            <option value="CHEST_ADD">CHEST_ADD</option>
+            <option value="CHEST_TAKE">CHEST_TAKE</option>
+            <option value="LOCKER_ADD">LOCKER_ADD</option>
+            <option value="LOCKER_TAKE">LOCKER_TAKE</option>
+            <option value="QUEST_ITEM_GIVE">QUEST_ITEM_GIVE</option>
+            <option value="QUEST_ITEM_REMOVE">QUEST_ITEM_REMOVE</option>
+            <option value="ACHIEVEMENT_ITEM_REWARD">ACHIEVEMENT_ITEM_REWARD</option>
+          </select>
+        </div>
+        <div class="plog-filter-group">
+          <label>Search Details</label>
+          <input type="text" id="plogSearch" placeholder="e.g. npc=42" style="width:160px">
+        </div>
+        <button class="plog-search-btn" id="plogSearchBtn">&#x1F50D; Search</button>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h3>&#x1F4CB; Player Action Logs</h3><span class="badge" id="plogTotal">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Time</th><th>Player</th><th>Category</th><th>Details</th>
+        </tr></thead><tbody id="plogTable"><tr><td colspan="4"><div class="loading-placeholder">Select filters and click Search</div></td></tr></tbody></table></div>
+      </div>
+      <div class="plog-pagination">
+        <button id="plogPrev" disabled>&#x276E; Previous</button>
+        <span class="plog-info" id="plogInfo"></span>
+        <button id="plogNext" disabled>Next &#x276F;</button>
+      </div>
+    </div>
+
+    <!-- Audit Tab -->
+    <div id="tab-audit" class="tab-content">
+      <div class="audit-controls">
+        <div class="plog-filter-group">
+          <label>Date</label>
+          <select id="auditDate"><option value="">Today</option></select>
+        </div>
+        <button class="audit-btn run" id="auditRunBtn">&#x1F6A8; Run Audit</button>
+        <button class="audit-btn fresh" id="auditFreshBtn">&#x1F504; Fresh Audit</button>
+      </div>
+      <div class="audit-summary" id="auditSummary" style="display:none">
+        <div class="audit-summary-card high"><div class="count" id="auditHigh">0</div><div class="label">High</div></div>
+        <div class="audit-summary-card medium"><div class="count" id="auditMedium">0</div><div class="label">Medium</div></div>
+        <div class="audit-summary-card low"><div class="count" id="auditLow">0</div><div class="label">Low</div></div>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h3>&#x1F6A8; Audit Alerts</h3><span class="badge" id="auditTotal">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Player</th><th>Severity</th><th>Rule</th><th>Details</th>
+        </tr></thead><tbody id="auditTable"><tr><td colspan="4"><div class="loading-placeholder">Click "Run Audit" to analyze player logs</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Material Trader Tab -->
+    <div id="tab-materialtrader" class="tab-content">
+      <div class="cards" id="mtCards"><div class="loading-placeholder">Loading material trader data...</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="table-container">
+          <div class="table-header"><h3>&#x1F4C8; Most Traded (by Volume)</h3></div>
+          <div style="overflow-x:auto"><table><thead><tr>
+            <th>Item</th><th>Bought</th><th>Sold</th><th>Gold In</th><th>Gold Out</th>
+          </tr></thead><tbody id="mtStatsTable"><tr><td colspan="5"><div class="loading-placeholder">No stats yet</div></td></tr></tbody></table></div>
+        </div>
+        <div class="table-container">
+          <div class="table-header"><h3>&#x1F4DD; Recent Transactions</h3><span class="badge" id="mtTxnCount">0</span></div>
+          <div style="overflow-x:auto;max-height:300px"><table><thead><tr>
+            <th>Time</th><th>Player</th><th>Action</th><th>Item</th><th>Qty</th><th>Price</th><th>Total</th>
+          </tr></thead><tbody id="mtTxnTable"><tr><td colspan="7"><div class="loading-placeholder">No transactions yet</div></td></tr></tbody></table></div>
+        </div>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h3>&#x1F4B0; All Prices</h3><span class="badge" id="mtItemCount">0</span></div>
+        <div style="padding:0 0 10px"><input type="text" id="mtSearch" placeholder="Search items by name or ID..." style="width:100%;max-width:320px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:.85rem;outline:none"></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>ID</th><th>Item</th><th>Stock</th><th>Base</th><th>Sell Price</th><th>Buy Price</th><th>Change</th><th>Min</th><th>Max</th><th>Edit Base</th><th></th>
+        </tr></thead><tbody id="mtPriceTable"><tr><td colspan="11"><div class="loading-placeholder">Loading prices...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Map Players Modal -->
+<div id="mapModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <h3><span id="mapModalTitle">Map Players</span><button class="close-btn" id="closeMapModalBtn">&times;</button></h3>
+    <table><thead><tr>
+      <th>Name</th><th>Level</th><th>Class</th><th>X,Y</th><th>Admin</th><th>Guild</th><th>HP</th><th>TP</th>
+    </tr></thead><tbody id="mapModalBody"></tbody></table>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div id="confirmModal" class="confirm-overlay" style="display:none">
+  <div class="confirm-dialog">
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" id="confirmNo">Cancel</button>
+      <button class="btn-ok" id="confirmYes">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
