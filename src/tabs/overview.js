@@ -34,7 +34,7 @@ function updateOverviewCards(s, st, sys) {
   const memStr = sys.memory_mb >= 0 ? sys.memory_mb.toFixed(1) + ' MB' : 'N/A';
   c.innerHTML = `
     <div class="card success"><div class="card-label">Players Online</div><div class="card-value">${s.players_online}</div><div class="card-sub">of ${s.max_players} max</div></div>
-    <div class="card info"><div class="card-label">Connections</div><div class="card-value">${s.connections}</div><div class="card-sub">of ${s.max_connections} max</div></div>
+    <div class="card info"><div class="card-label">Connections</div><div class="card-value">${s.connections}</div><div class="card-sub"><span class="conn-badge conn-ws">WS</span> <span id="wsCount">0</span> &nbsp; <span class="conn-badge conn-tcp">TCP</span> <span id="tcpCount">0</span></div></div>
     <div class="card"><div class="card-label">Accounts</div><div class="card-value">${st.accounts}</div></div>
     <div class="card"><div class="card-label">Characters</div><div class="card-value">${st.characters}</div><div class="card-sub">${st.staff_characters} staff</div></div>
     <div class="card"><div class="card-label">Guilds</div><div class="card-value">${st.guilds}</div></div>
@@ -45,15 +45,28 @@ function updateOverviewCards(s, st, sys) {
   `;
 }
 
+function connBadge(conn) {
+  const isWs = conn === 'ws';
+  const label = isWs ? 'WS' : 'TCP';
+  const cls = isWs ? 'conn-ws' : 'conn-tcp';
+  return `<span class="conn-badge ${cls}">${label}</span>`;
+}
+
 function updatePlayers(players) {
   document.getElementById('playersCount').textContent = players.length;
   document.getElementById('playersCountDetail').textContent = players.length;
+
+  const wsCount = players.filter(p => p.connection === 'ws').length;
+  const tcpCount = players.length - wsCount;
+  document.getElementById('wsCount').textContent = wsCount;
+  document.getElementById('tcpCount').textContent = tcpCount;
 
   const ob = document.getElementById('overviewPlayers');
   ob.innerHTML = players.map(p => `<tr>
     <td><strong>${esc(p.name)}</strong></td><td>${p.level}</td><td>${p.class}</td>
     <td>${p.map}</td><td>${esc(p.guild_tag) || '-'}</td><td>${adminBadge(p.admin, p.admin_level)}</td>
     <td>${p.hp}/${p.max_hp}</td><td>${p.tp}/${p.max_tp}</td>
+    <td>${connBadge(p.connection)}</td>
   </tr>`).join('');
 
   const tb = document.getElementById('playersTable');
@@ -65,6 +78,7 @@ function updatePlayers(players) {
     <td>${p.str}</td><td>${p.int}</td><td>${p.wis}</td><td>${p.agi}</td><td>${p.con}</td><td>${p.cha}</td>
     <td>${p.weight}/${p.max_weight}</td><td>${p.karma}</td>
     <td>${esc(p.home) || '-'}</td><td>${esc(p.title) || '-'}</td>
+    <td>${connBadge(p.connection)}</td>
   </tr>`).join('');
 }
 

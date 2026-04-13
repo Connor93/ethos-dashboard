@@ -56,8 +56,14 @@
   </div>
 
   <!-- Header -->
+  <!-- Mobile sidebar backdrop -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
   <div class="header">
-    <div class="header-title"><span class="status-dot online"></span> Server Online</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">&#9776;</button>
+      <div class="header-title"><span class="status-dot online"></span> Server Online</div>
+    </div>
     <div class="header-meta">
       <div class="meta-item">Uptime: <span class="meta-value" id="headerUptime">-</span></div>
       <div class="meta-item">Players: <span class="meta-value" id="headerPlayers">-</span></div>
@@ -80,8 +86,8 @@
       <div class="table-container">
         <div class="table-header"><h3>Online Players</h3><span class="badge" id="playersCount">0</span></div>
         <div style="overflow-x:auto"><table><thead><tr>
-          <th>Name</th><th>Level</th><th>Class</th><th>Map</th><th>Guild</th><th>Admin</th><th>HP</th><th>TP</th>
-        </tr></thead><tbody id="overviewPlayers"><tr><td colspan="8"><div class="loading-placeholder">Loading players...</div></td></tr></tbody></table></div>
+          <th>Name</th><th>Level</th><th>Class</th><th>Map</th><th>Guild</th><th>Admin</th><th>HP</th><th>TP</th><th>Conn</th>
+        </tr></thead><tbody id="overviewPlayers"><tr><td colspan="9"><div class="loading-placeholder">Loading players...</div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -92,8 +98,8 @@
         <div style="overflow-x:auto"><table><thead><tr>
           <th>Name</th><th>Lv</th><th>Class</th><th>Map</th><th>X,Y</th><th>Admin</th><th>Guild</th>
           <th>HP</th><th>TP</th><th>STR</th><th>INT</th><th>WIS</th><th>AGI</th><th>CON</th><th>CHA</th>
-          <th>Weight</th><th>Karma</th><th>Home</th><th>Title</th>
-        </tr></thead><tbody id="playersTable"><tr><td colspan="19"><div class="loading-placeholder">Loading players...</div></td></tr></tbody></table></div>
+          <th>Weight</th><th>Karma</th><th>Home</th><th>Title</th><th>Conn</th>
+        </tr></thead><tbody id="playersTable"><tr><td colspan="20"><div class="loading-placeholder">Loading players...</div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -249,6 +255,15 @@
             <option value="QUEST_ITEM_GIVE">QUEST_ITEM_GIVE</option>
             <option value="QUEST_ITEM_REMOVE">QUEST_ITEM_REMOVE</option>
             <option value="ACHIEVEMENT_ITEM_REWARD">ACHIEVEMENT_ITEM_REWARD</option>
+            <option value="GUILD_BOUNTY_COMPLETE">GUILD_BOUNTY_COMPLETE</option>
+            <option value="BOUNTY_BOARD_POST">BOUNTY_BOARD_POST</option>
+            <option value="BOUNTY_BOARD_ACCEPT">BOUNTY_BOARD_ACCEPT</option>
+            <option value="BOUNTY_BOARD_DELIVER">BOUNTY_BOARD_DELIVER</option>
+            <option value="BOUNTY_BOARD_CANCEL">BOUNTY_BOARD_CANCEL</option>
+            <option value="GUILD_WARP">GUILD_WARP</option>
+            <option value="GUILD_JOIN">GUILD_JOIN</option>
+            <option value="GUILD_LEAVE">GUILD_LEAVE</option>
+            <option value="GUILD_KICK">GUILD_KICK</option>
           </select>
         </div>
         <div class="plog-filter-group">
