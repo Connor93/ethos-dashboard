@@ -412,3 +412,56 @@ td.plog-cat{white-space:nowrap}
   .cards{grid-template-columns:1fr}
   .header-meta{display:none}
 }
+
+/* Bot Alerts */
+.alert-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;justify-content:space-between}
+.alert-filter-group{display:flex;gap:4px}
+.alert-filter-btn{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:.85rem;font-weight:500;transition:all .15s}
+.alert-filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+.alert-filter-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+
+.alert-weights-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+.alert-weights-panel h4{margin:0 0 12px;font-size:.9rem;color:var(--text-secondary)}
+.weight-row{display:flex;align-items:center;gap:10px;padding:4px 0}
+.weight-name{width:140px;font-size:.8rem;color:var(--text-primary)}
+.weight-bar-track{flex:1;height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden}
+.weight-bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.weight-value{width:36px;font-size:.8rem;font-weight:600;color:var(--text-primary);text-align:right}
+.weight-feedback{font-size:.75rem;color:var(--text-muted);white-space:nowrap}
+
+.alert-score-cell{display:flex;align-items:center;gap:8px}
+.alert-score-bar{width:60px;height:6px;background:var(--bg-secondary);border-radius:3px;overflow:hidden}
+.alert-score-fill{height:100%;border-radius:3px;transition:width .3s}
+
+/* Alert Detail Modal */
+.alert-detail-modal{max-width:640px;width:90vw}
+.alert-detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.alert-detail-header h3{margin:0 0 6px;font-size:1.1rem}
+.alert-detail-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--text-muted);align-items:center}
+.alert-detail-score{font-size:2rem;font-weight:700;color:var(--danger);line-height:1}
+.alert-detail-body h4{margin:16px 0 10px;font-size:.9rem;color:var(--text-secondary)}
+
+.signal-grid{display:flex;flex-direction:column;gap:8px}
+.signal-row{display:flex;align-items:center;gap:8px}
+.signal-label{width:140px;font-size:.8rem;color:var(--text-primary)}
+.signal-bar-track{flex:1;height:10px;background:var(--bg-secondary);border-radius:5px;overflow:hidden}
+.signal-bar-fill{height:100%;border-radius:5px;transition:width .3s}
+.signal-value{width:36px;font-size:.8rem;font-weight:600;text-align:right}
+.signal-feedback-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);cursor:pointer;font-size:14px;line-height:1;transition:all .15s;padding:0}
+.signal-feedback-btn:hover{border-color:var(--accent)}
+.signal-feedback-btn.up.selected{background:rgba(34,197,94,.15);border-color:var(--success);color:var(--success)}
+.signal-feedback-btn.down.selected{background:rgba(239,68,68,.15);border-color:var(--danger);color:var(--danger)}
+
+.alert-escalation{margin:12px 0;padding:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;font-size:.85rem;color:var(--warning)}
+
+.alert-history-table{width:100%;margin-top:8px}
+.alert-history-table th,.alert-history-table td{padding:6px 10px;font-size:.8rem}
+
+.alert-review-actions{border-top:1px solid var(--border);padding-top:16px;margin-top:16px}
+.alert-review-actions textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-family:inherit;font-size:.85rem;resize:vertical;margin-bottom:10px;box-sizing:border-box}
+.alert-review-btns{display:flex;gap:8px}
+.alert-deny-btn{padding:10px 24px;border:none;border-radius:8px;color:white;cursor:pointer;font-family:inherit;font-weight:600;font-size:.9rem;background:linear-gradient(135deg,var(--success),#16a34a);transition:all .15s}
+.alert-deny-btn:hover{background:linear-gradient(135deg,#16a34a,#15803d)}
+
+.alert-review-info{margin-top:12px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:.8rem;color:var(--text-muted)}
+.alert-review-notes{margin-top:6px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:.8rem;color:var(--text-primary);font-style:italic}

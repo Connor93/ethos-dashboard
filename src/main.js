@@ -16,6 +16,7 @@ import { loadConfig } from './tabs/config.js';
 import { initPlayerLogs, stopPlogPolling } from './tabs/player-logs.js';
 import { initAuditTab } from './tabs/audit.js';
 import { loadMaterialTrader } from './tabs/material-trader.js';
+import { initAlertsTab } from './tabs/alerts.js';
 import { startLogPolling } from './tabs/overview.js';
 
 let refreshTimer = null;
@@ -95,12 +96,30 @@ function showDashboard() {
 // ---- Navigation ----
 
 function initNavigation() {
+  const sidebar = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const hamburger = document.getElementById('hamburgerBtn');
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('visible');
+  }
+
+  hamburger.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    backdrop.classList.toggle('visible');
+  });
+  backdrop.addEventListener('click', closeSidebar);
+
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       item.classList.add('active');
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.getElementById('tab-' + item.dataset.tab).classList.add('active');
+
+      // Close sidebar on mobile
+      closeSidebar();
 
       const tab = item.dataset.tab;
       if (tab === 'guilds') loadGuilds();
@@ -112,6 +131,7 @@ function initNavigation() {
       if (tab === 'playerlogs') initPlayerLogs();
       if (tab === 'audit') initAuditTab();
       if (tab === 'materialtrader') loadMaterialTrader();
+      if (tab === 'alerts') initAlertsTab();
     });
   });
 }

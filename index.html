@@ -48,6 +48,7 @@
       <div class="nav-item" data-tab="playerlogs"><span class="icon">&#x1F50D;</span> Player Logs</div>
       <div class="nav-item" data-tab="materialtrader"><span class="icon">&#x1F4B0;</span> Material Trader</div>
       <div class="nav-item" data-tab="audit"><span class="icon">&#x1F6A8;</span> Log Audit</div>
+      <div class="nav-item" data-tab="alerts"><span class="icon">&#x1F916;</span> Bot Alerts</div>
     </div>
     <div class="sidebar-footer">
       <div class="user">Logged in as <strong id="currentUser">-</strong></div>
@@ -331,6 +332,48 @@
         <div style="overflow-x:auto"><table><thead><tr>
           <th>ID</th><th>Item</th><th>Stock</th><th>Base</th><th>Sell Price</th><th>Buy Price</th><th>Change</th><th>Min</th><th>Max</th><th>Edit Base</th><th></th>
         </tr></thead><tbody id="mtPriceTable"><tr><td colspan="11"><div class="loading-placeholder">Loading prices...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+    <!-- Bot Alerts Tab -->
+    <div id="tab-alerts" class="tab-content">
+      <div class="alert-controls">
+        <div class="alert-filter-group">
+          <button class="alert-filter-btn active" id="alertFilterAll">All</button>
+          <button class="alert-filter-btn" id="alertFilterPending">Pending</button>
+          <button class="alert-filter-btn" id="alertFilterConfirmed">Confirmed</button>
+          <button class="alert-filter-btn" id="alertFilterDenied">Denied</button>
+        </div>
+        <button class="audit-btn fresh" id="alertRefreshBtn">&#x1F504; Refresh</button>
+      </div>
+      <div class="alert-weights-panel" id="alertWeightsPanel">
+        <h4>Signal Weights</h4>
+        <div id="alertWeightsBody"><div class="loading-placeholder">Loading weights...</div></div>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h3>&#x1F916; Bot Detection Alerts</h3><span class="badge" id="alertsBadge">0</span></div>
+        <div style="overflow-x:auto"><table><thead><tr>
+          <th>Player</th><th>Score</th><th>Status</th><th>Location</th><th>Session</th><th>Time</th>
+        </tr></thead><tbody id="alertsTableBody"><tr><td colspan="6"><div class="loading-placeholder">Click a filter to load alerts</div></td></tr></tbody></table></div>
+      </div>
+      <div class="plog-pagination">
+        <button id="alertPrev" disabled>&#x276E; Previous</button>
+        <span class="plog-info" id="alertPageInfo"></span>
+        <button id="alertNext" disabled>Next &#x276F;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Detail Modal -->
+<div id="alertDetailModal" class="modal-overlay" style="display:none">
+  <div class="modal alert-detail-modal">
+    <h3><span>Alert Review</span><button class="close-btn" id="alertDetailCloseBtn">&times;</button></h3>
+    <div id="alertDetailBody"><div class="loading-placeholder">Loading...</div></div>
+    <div id="alertReviewActions" class="alert-review-actions" style="display:none">
+      <textarea id="alertReviewNotes" placeholder="Review notes (optional)..." rows="2"></textarea>
+      <div class="alert-review-btns">
+        <button class="audit-btn run" id="alertConfirmBtn">&#x2714; Confirm Bot</button>
+        <button class="alert-deny-btn" id="alertDenyBtn">&#x2718; Deny (Legit)</button>
       </div>
     </div>
   </div>
