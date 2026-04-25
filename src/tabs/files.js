@@ -2,6 +2,7 @@ import { api } from '../api.js';
 import { esc } from '../utils/helpers.js';
 import { showToast } from '../utils/toast.js';
 import { showConfirm } from '../utils/confirm.js';
+import { saveBackup, listBackups, getBackup } from '../utils/backups.js';
 import { runCmd } from './commands.js';
 
 let currentFilePath = '';
@@ -12,6 +13,7 @@ export function initFiles() {
   loadFileTree();
 
   document.getElementById('saveFileBtn').addEventListener('click', saveCurrentFile);
+  document.getElementById('historyBtn').addEventListener('click', toggleHistoryPanel);
 }
 
 async function loadFileTree() {
@@ -67,10 +69,12 @@ async function openFile(el, path) {
   currentFilePath = path;
   document.getElementById('editorFileName').textContent = path;
   document.getElementById('fileEditorArea').innerHTML = '<div class="file-editor-empty">Loading...</div>';
+  hideHistoryPanel();
   try {
     const d = await api('/api/file?path=' + encodeURIComponent(path));
     document.getElementById('fileEditorArea').innerHTML = '<textarea id="fileEditor" spellcheck="false">' + esc(d.content) + '</textarea>';
     document.getElementById('saveFileBtn').disabled = false;
+    document.getElementById('historyBtn').disabled = false;
   } catch (e) {
     document.getElementById('fileEditorArea').innerHTML = '<div class="file-editor-empty" style="color:var(--danger)">Error loading file</div>';
   }
@@ -82,10 +86,112 @@ async function saveCurrentFile() {
   if (!editor) return;
   const ok = await showConfirm('Save changes to ' + currentFilePath + '?');
   if (!ok) return;
+
+  const newContent = editor.value;
+  const saveBtn = document.getElementById('saveFileBtn');
+  saveBtn.disabled = true;
+  const originalLabel = saveBtn.innerHTML;
+  saveBtn.innerHTML = 'Saving...';
+
   try {
-    await api('/api/file', { method: 'POST', body: { path: currentFilePath, content: editor.value } });
-    showToast('File saved: ' + currentFilePath, 'success');
+    // Step 1: snapshot the current on-disk version into IndexedDB before
+    // we touch it. If the POST below truncates the file, the last good
+    // version is still recoverable from History.
+    try {
+      const pre = await api('/api/file?path=' + encodeURIComponent(currentFilePath));
+      await saveBackup(currentFilePath, pre.content);
+    } catch (e) {
+      // Don't block the save on a backup failure, but make it visible.
+      // (Far worse to refuse to save than to save without a backup.)
+      showToast('Backup failed (continuing save): ' + e.message, 'error');
+    }
+
+    // Step 2: write
+    await api('/api/file', { method: 'POST', body: { path: currentFilePath, content: newContent } });
+
+    // Step 3: re-read and verify the on-disk content matches what we sent.
+    // This catches the silent-truncation class of bug at the dashboard
+    // boundary even if a server-side regression slips through.
+    const verify = await api('/api/file?path=' + encodeURIComponent(currentFilePath));
+    if (verify.content !== newContent) {
+      const sentLen = newContent.length;
+      const gotLen = verify.content.length;
+      showToast(
+        'Save mismatch: sent ' + sentLen + ' bytes, server has ' + gotLen +
+        '. The previous version is in History.',
+        'error'
+      );
+    } else {
+      showToast('File saved: ' + currentFilePath, 'success');
+    }
   } catch (e) {
-    showToast('Save failed: ' + e.message, 'error');
+    showToast('Save failed: ' + e.message + '. The previous version is in History.', 'error');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalLabel;
   }
+}
+
+// ---- History panel ----
+
+function hideHistoryPanel() {
+  const panel = document.getElementById('fileHistoryPanel');
+  if (panel) panel.hidden = true;
+}
+
+async function toggleHistoryPanel() {
+  const panel = document.getElementById('fileHistoryPanel');
+  if (!panel) return;
+  if (!panel.hidden) { panel.hidden = true; return; }
+  await renderHistoryPanel();
+  panel.hidden = false;
+}
+
+async function renderHistoryPanel() {
+  const panel = document.getElementById('fileHistoryPanel');
+  if (!panel || !currentFilePath) return;
+  panel.innerHTML = '<div class="file-history-loading">Loading backups...</div>';
+  let backups;
+  try {
+    backups = await listBackups(currentFilePath);
+  } catch (e) {
+    panel.innerHTML = '<div class="file-history-empty" style="color:var(--danger)">Could not read backups: ' + esc(e.message) + '</div>';
+    return;
+  }
+  if (!backups.length) {
+    panel.innerHTML = '<div class="file-history-empty">No backups yet. A backup is saved automatically each time you save this file.</div>';
+    return;
+  }
+  let html = '<div class="file-history-header">Backups for ' + esc(currentFilePath) + '</div>';
+  html += '<ul class="file-history-list">';
+  for (const b of backups) {
+    const when = new Date(b.ts).toLocaleString();
+    html += '<li class="file-history-item" data-id="' + b.id + '">';
+    html += '<div class="file-history-meta">';
+    html += '<span class="file-history-when">' + esc(when) + '</span>';
+    html += '<span class="file-history-size">' + b.size + ' bytes</span>';
+    html += '</div>';
+    html += '<button class="file-history-restore" data-id="' + b.id + '">Restore into editor</button>';
+    html += '</li>';
+  }
+  html += '</ul>';
+  html += '<div class="file-history-footnote">Restore loads the backup into the editor for review. Click Save to commit it.</div>';
+  panel.innerHTML = html;
+
+  panel.querySelectorAll('.file-history-restore').forEach(btn => {
+    btn.addEventListener('click', () => restoreBackup(parseInt(btn.dataset.id, 10)));
+  });
+}
+
+async function restoreBackup(id) {
+  const editor = document.getElementById('fileEditor');
+  if (!editor) {
+    showToast('Open a file first', 'error');
+    return;
+  }
+  const rec = await getBackup(id);
+  if (!rec) { showToast('Backup not found', 'error'); return; }
+  editor.value = rec.content;
+  hideHistoryPanel();
+  showToast('Backup loaded into editor — review and click Save to commit', 'success');
 }
