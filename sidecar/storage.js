@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { readdir, readFile, writeFile, rename, mkdir, unlink } from 'node:fs/promises';
 
+export const MAX_PER_PATH = 20;
+
 export function pathHash(path) {
   return createHash('sha1').update(path).digest('hex').slice(0, 16);
 }
@@ -109,8 +111,6 @@ export async function writeBackup({ root, path, content, username }) {
 
   return { id, ts };
 }
-
-const MAX_PER_PATH = 20;
 
 async function enforceRetention(dir) {
   let entries;
