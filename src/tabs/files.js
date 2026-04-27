@@ -1,4 +1,4 @@
-import { api } from '../api.js';
+import { api, getUsername } from '../api.js';
 import { esc } from '../utils/helpers.js';
 import { showToast } from '../utils/toast.js';
 import { showConfirm } from '../utils/confirm.js';
@@ -99,7 +99,7 @@ async function saveCurrentFile() {
     // version is still recoverable from History.
     try {
       const pre = await api('/api/file?path=' + encodeURIComponent(currentFilePath));
-      await saveBackup(currentFilePath, pre.content);
+      await saveBackup(currentFilePath, pre.content, getUsername());
     } catch (e) {
       // Don't block the save on a backup failure, but make it visible.
       // (Far worse to refuse to save than to save without a backup.)
@@ -166,12 +166,14 @@ async function renderHistoryPanel() {
   html += '<ul class="file-history-list">';
   for (const b of backups) {
     const when = new Date(b.ts).toLocaleString();
-    html += '<li class="file-history-item" data-id="' + b.id + '">';
+    html += '<li class="file-history-item" data-id="' + esc(b.id) + '">';
+    const who = b.username ? esc(b.username) : 'unknown';
     html += '<div class="file-history-meta">';
     html += '<span class="file-history-when">' + esc(when) + '</span>';
+    html += '<span class="file-history-who">by ' + who + '</span>';
     html += '<span class="file-history-size">' + b.size + ' bytes</span>';
     html += '</div>';
-    html += '<button class="file-history-restore" data-id="' + b.id + '">Restore into editor</button>';
+    html += '<button class="file-history-restore" data-id="' + esc(b.id) + '">Restore into editor</button>';
     html += '</li>';
   }
   html += '</ul>';
@@ -179,17 +181,17 @@ async function renderHistoryPanel() {
   panel.innerHTML = html;
 
   panel.querySelectorAll('.file-history-restore').forEach(btn => {
-    btn.addEventListener('click', () => restoreBackup(parseInt(btn.dataset.id, 10)));
+    btn.addEventListener('click', () => restoreBackup(btn.dataset.id, currentFilePath));
   });
 }
 
-async function restoreBackup(id) {
+async function restoreBackup(id, path) {
   const editor = document.getElementById('fileEditor');
   if (!editor) {
     showToast('Open a file first', 'error');
     return;
   }
-  const rec = await getBackup(id);
+  const rec = await getBackup(id, path);
   if (!rec) { showToast('Backup not found', 'error'); return; }
   editor.value = rec.content;
   hideHistoryPanel();

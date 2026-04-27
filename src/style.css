@@ -244,6 +244,7 @@ tr.clickable:hover td{background:rgba(99,102,241,.08)}
   padding:8px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px}
 .file-history-meta{display:flex;flex-direction:column;gap:2px;font-size:.8rem}
 .file-history-when{color:var(--text-primary)}
+.file-history-who{color:var(--text-secondary);font-size:.85rem}
 .file-history-size{color:var(--text-muted);font-size:.75rem}
 .file-history-restore{padding:4px 12px;border:1px solid var(--border);border-radius:6px;
   background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;font-family:inherit;
