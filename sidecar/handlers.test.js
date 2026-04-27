@@ -143,3 +143,31 @@ test('Concurrent POSTs to the same path serialize', async () => {
   await Promise.all([make(), make(), make()]);
   assert.equal(maxActive, 1);
 });
+
+test('withPathLock survives a synchronously-throwing fn (no deadlock)', async () => {
+  // If release is unbound when fn throws synchronously, the chain hangs and
+  // any subsequent same-path POST blocks forever. We exercise that edge by
+  // making the storage call throw synchronously, then issue a follow-up POST
+  // and verify it completes.
+  let throws = true;
+  const storage = {
+    async writeBackup() {
+      if (throws) {
+        throws = false;
+        throw new Error('boom');
+      }
+      return { id: 'ok', ts: 0 };
+    },
+  };
+
+  const post = () => handleRequest({ storage }, fakeReq({
+    method: 'POST',
+    url: '/backups',
+    body: JSON.stringify({ path: 'p.ini', content: 'c', username: 'u' }),
+  }), fakeRes());
+
+  // First call: storage throws -> handler should return 500 and release the lock.
+  const first = await Promise.race([post(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout-1')), 1000))]);
+  // Second call must complete (not hang on a never-released lock).
+  const second = await Promise.race([post(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout-2')), 1000))]);
+});

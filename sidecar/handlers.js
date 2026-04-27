@@ -23,16 +23,22 @@ function parseUrl(url) {
 const pathLocks = new Map();
 
 async function withPathLock(path, fn) {
-  const prev = pathLocks.get(path) || Promise.resolve();
+  // Build the gate synchronously so `release` is assigned before any await.
+  // (Assigning `release` inside a .then() callback would race with a
+  // synchronous `fn()` failure and leave the chain deadlocked.)
   let release;
-  const next = prev.then(() => new Promise((resolve) => { release = resolve; }));
+  const gate = new Promise((resolve) => { release = resolve; });
+
+  const prev = pathLocks.get(path) || Promise.resolve();
+  const next = prev.then(() => gate);
   pathLocks.set(path, next);
+
   await prev;
   try {
     return await fn();
   } finally {
     release();
-    // best-effort cleanup: drop the entry if we're still the tail of the chain
+    // best-effort cleanup: drop the entry if we're still the tail of the chain.
     if (pathLocks.get(path) === next) pathLocks.delete(path);
   }
 }
