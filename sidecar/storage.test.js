@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pathHash, dirFor } from './storage.js';
+import { pathHash, dirFor, validatePath, nextSequence, writeBackup, listBackups as listB } from './storage.js';
 
 test('pathHash returns 16 hex chars', () => {
   const h = pathHash('config/admin.ini');
@@ -19,8 +19,6 @@ test('dirFor joins the root and the hash', () => {
   const h = pathHash('config/admin.ini');
   assert.equal(dirFor('/data/backups', 'config/admin.ini'), `/data/backups/${h}`);
 });
-
-import { validatePath } from './storage.js';
 
 test('validatePath accepts normal relative paths', () => {
   assert.doesNotThrow(() => validatePath('config/admin.ini'));
@@ -54,8 +52,6 @@ test('validatePath rejects backslashes (defense-in-depth for cross-OS reads)', (
 import { mkdtemp, mkdir, writeFile as writeFileFs, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join as pjoin } from 'node:path';
-import { nextSequence } from './storage.js';
-
 async function withTmp(fn) {
   const dir = await mkdtemp(pjoin(tmpdir(), 'sidecar-test-'));
   try { return await fn(dir); }
@@ -111,7 +107,6 @@ test('nextSequence ignores filenames whose prefix is not a 10-digit sequence', a
 });
 
 import { readFile, readdir as readDir2 } from 'node:fs/promises';
-import { writeBackup } from './storage.js';
 
 test('writeBackup creates one JSON file with the right shape', async () => {
   await withTmp(async (root) => {
@@ -234,8 +229,6 @@ test('writeBackup caps retention at 20 newest per file', async () => {
   });
 });
 
-import { listBackups as listB } from './storage.js';
-
 test('listBackups returns [] for an unknown path', async () => {
   await withTmp(async (root) => {
     const out = await listB({ root, path: 'config/unknown.ini' });
@@ -266,5 +259,23 @@ test('listBackups ignores .tmp and the path file', async () => {
     await writeFileFs(pjoin(dir, '0000000099_x.json.tmp'), 'garbage');
     const out = await listB({ root, path: 'config/l.ini' });
     assert.equal(out.length, 1);
+  });
+});
+
+test('listBackups skips records with missing required fields', async () => {
+  await withTmp(async (root) => {
+    // Seed one good record.
+    await writeBackup({ root, path: 'config/m.ini', content: 'good', username: 'alice' });
+    const dir = dirFor(root, 'config/m.ini');
+
+    // Drop a structurally incomplete JSON next to it (parses fine, but no sha).
+    await writeFileFs(pjoin(dir, '0000000999_bad.json'), JSON.stringify({
+      id: '0000000999_bad', ts: 0, username: 'x', size: 0,
+      // sha intentionally missing
+    }));
+
+    const out = await listB({ root, path: 'config/m.ini' });
+    assert.equal(out.length, 1);
+    assert.equal(out[0].username, 'alice');
   });
 });

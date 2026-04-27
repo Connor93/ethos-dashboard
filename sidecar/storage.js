@@ -143,6 +143,9 @@ export async function listBackups({ root, path }) {
   for (const name of jsons.slice(0, MAX_PER_PATH)) {
     try {
       const rec = JSON.parse(await readFile(join(dir, name), 'utf8'));
+      if (!rec || !rec.id || typeof rec.ts !== 'number' || !rec.sha) {
+        continue;   // structurally incomplete — drop silently rather than serving undefineds
+      }
       out.push({
         id: rec.id,
         ts: rec.ts,
