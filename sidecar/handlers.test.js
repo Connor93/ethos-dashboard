@@ -92,3 +92,34 @@ test('GET /backups returns 400 when path is missing', async () => {
   await handleRequest({ storage }, fakeReq({ method: 'GET', url: '/backups' }), res);
   assert.equal(res.statusCode, 400);
 });
+
+test('GET /backups/:id?path=… returns the full record', async () => {
+  const storage = fakeStorage();
+  const res = fakeRes();
+  await handleRequest({ storage }, fakeReq({
+    method: 'GET',
+    url: '/backups/0000000001_xyz?path=' + encodeURIComponent('config/admin.ini'),
+  }), res);
+  assert.equal(res.statusCode, 200);
+  const out = JSON.parse(res.body);
+  assert.equal(out.content, 'hi');
+  assert.equal(out.id, '0000000001_xyz');
+  assert.deepEqual(storage.calls[0], ['get', { root: undefined, path: 'config/admin.ini', id: '0000000001_xyz' }]);
+});
+
+test('GET /backups/:id returns 400 when path is missing', async () => {
+  const storage = fakeStorage();
+  const res = fakeRes();
+  await handleRequest({ storage }, fakeReq({ method: 'GET', url: '/backups/0000000001_xyz' }), res);
+  assert.equal(res.statusCode, 400);
+});
+
+test('GET /backups/:id returns 404 when not found', async () => {
+  const storage = fakeStorage();
+  const res = fakeRes();
+  await handleRequest({ storage }, fakeReq({
+    method: 'GET',
+    url: '/backups/missing?path=' + encodeURIComponent('config/admin.ini'),
+  }), res);
+  assert.equal(res.statusCode, 404);
+});
