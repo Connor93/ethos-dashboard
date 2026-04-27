@@ -20,6 +20,23 @@ function parseUrl(url) {
   return { pathname: u.pathname, params: u.searchParams };
 }
 
+const pathLocks = new Map();
+
+async function withPathLock(path, fn) {
+  const prev = pathLocks.get(path) || Promise.resolve();
+  let release;
+  const next = prev.then(() => new Promise((resolve) => { release = resolve; }));
+  pathLocks.set(path, next);
+  await prev;
+  try {
+    return await fn();
+  } finally {
+    release();
+    // best-effort cleanup: drop the entry if we're still the tail of the chain
+    if (pathLocks.get(path) === next) pathLocks.delete(path);
+  }
+}
+
 export async function handleRequest({ storage, root }, req, res) {
   const { pathname, params } = parseUrl(req.url);
 
@@ -34,7 +51,7 @@ export async function handleRequest({ storage, root }, req, res) {
     if (typeof username !== 'string' || !username) return send(res, 400, { error: 'missing username' });
 
     try {
-      const result = await storage.writeBackup({ root, path, content, username });
+      const result = await withPathLock(path, () => storage.writeBackup({ root, path, content, username }));
       return send(res, 200, result);
     } catch (e) {
       return send(res, 500, { error: e.message });

@@ -123,3 +123,23 @@ test('GET /backups/:id returns 404 when not found', async () => {
   }), res);
   assert.equal(res.statusCode, 404);
 });
+
+test('Concurrent POSTs to the same path serialize', async () => {
+  let active = 0, maxActive = 0;
+  const storage = {
+    async writeBackup() {
+      active++; maxActive = Math.max(maxActive, active);
+      await new Promise(r => setTimeout(r, 20));
+      active--;
+      return { id: 'x', ts: 0 };
+    },
+  };
+  const make = () => handleRequest({ storage }, fakeReq({
+    method: 'POST',
+    url: '/backups',
+    body: JSON.stringify({ path: 'p.ini', content: 'c', username: 'u' }),
+  }), fakeRes());
+
+  await Promise.all([make(), make(), make()]);
+  assert.equal(maxActive, 1);
+});
