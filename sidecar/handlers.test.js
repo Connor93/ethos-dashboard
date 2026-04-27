@@ -1,5 +1,73 @@
 import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { handleRequest } from './handlers.js';
 
-test('handlers skeleton compiles', () => {
-  // Replaced by real tests in later tasks.
+function fakeStorage() {
+  const calls = [];
+  return {
+    calls,
+    async writeBackup(args) { calls.push(['write', args]); return { id: 'fake-id', ts: 123 }; },
+    async listBackups(args) { calls.push(['list', args]); return [{ id: 'a', ts: 1, username: 'u', size: 1, sha: 'x' }]; },
+    async getBackup(args) {
+      calls.push(['get', args]);
+      if (args.id === 'missing') return null;
+      return { id: args.id, path: args.path, ts: 1, username: 'u', size: 1, sha: 'x', content: 'hi' };
+    },
+  };
+}
+
+function fakeReq({ method, url, body }) {
+  return {
+    method,
+    url,
+    headers: {},
+    [Symbol.asyncIterator]: async function* () {
+      if (body) yield Buffer.from(body);
+    },
+  };
+}
+
+function fakeRes() {
+  const res = { statusCode: 200, headers: {}, body: '' };
+  res.setHeader = (k, v) => { res.headers[k] = v; };
+  res.writeHead = (code, headers) => { res.statusCode = code; if (headers) Object.assign(res.headers, headers); };
+  res.end = (data) => { res.body = data ?? ''; res.ended = true; };
+  return res;
+}
+
+test('POST /backups writes and returns 200 with id, ts', async () => {
+  const storage = fakeStorage();
+  const res = fakeRes();
+  await handleRequest({ storage }, fakeReq({
+    method: 'POST',
+    url: '/backups',
+    body: JSON.stringify({ path: 'config/admin.ini', content: 'hi', username: 'alice' }),
+  }), res);
+  assert.equal(res.statusCode, 200);
+  const out = JSON.parse(res.body);
+  assert.equal(out.id, 'fake-id');
+  assert.equal(out.ts, 123);
+  assert.deepEqual(storage.calls[0], ['write', { root: undefined, path: 'config/admin.ini', content: 'hi', username: 'alice' }]);
+});
+
+test('POST /backups returns 400 when fields are missing', async () => {
+  const storage = fakeStorage();
+  const res = fakeRes();
+  await handleRequest({ storage }, fakeReq({
+    method: 'POST',
+    url: '/backups',
+    body: JSON.stringify({ path: 'config/admin.ini' }),
+  }), res);
+  assert.equal(res.statusCode, 400);
+});
+
+test('POST /backups returns 400 on invalid JSON', async () => {
+  const storage = fakeStorage();
+  const res = fakeRes();
+  await handleRequest({ storage }, fakeReq({
+    method: 'POST',
+    url: '/backups',
+    body: '{not json',
+  }), res);
+  assert.equal(res.statusCode, 400);
 });
