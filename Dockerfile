@@ -16,17 +16,23 @@ COPY . .
 RUN npm run build
 
 # ===========================================
-# Stage 2: Serve with Nginx
+# Stage 2: Serve with Nginx + run sidecar
 # ===========================================
 FROM nginx:alpine
+
+# Add Node.js for the backups sidecar
+RUN apk add --no-cache nodejs
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom nginx configuration (will be templated at deploy time)
+# Copy custom nginx configuration (templated at deploy time)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy entrypoint script that templates nginx config before starting
+# Copy backups sidecar
+COPY sidecar /app/sidecar
+
+# Copy entrypoint script that templates nginx config and starts sidecar + nginx
 COPY docker-entrypoint.sh /docker-entrypoint-custom.sh
 RUN chmod +x /docker-entrypoint-custom.sh
 
