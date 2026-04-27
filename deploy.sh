@@ -100,9 +100,13 @@ services:
       - ETHEOS_API_KEY=${ETHEOS_API_KEY}
     networks:
       - web
+    volumes:
+      - etheos-dashboard-backups:/data/backups
 networks:
   web:
     external: true
+volumes:
+  etheos-dashboard-backups:
 COMPOSE_EOF
 
 # Pull and recreate
