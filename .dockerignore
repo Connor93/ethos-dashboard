@@ -4,3 +4,4 @@ dist
 .github
 .DS_Store
 *.md
+sidecar/*.test.js

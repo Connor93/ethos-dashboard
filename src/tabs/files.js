@@ -94,9 +94,9 @@ async function saveCurrentFile() {
   saveBtn.innerHTML = 'Saving...';
 
   try {
-    // Step 1: snapshot the current on-disk version into IndexedDB before
-    // we touch it. If the POST below truncates the file, the last good
-    // version is still recoverable from History.
+    // Step 1: snapshot the current on-disk version via the backup sidecar
+    // before we touch it. If the POST below truncates the file, the last
+    // good version is still recoverable from History.
     try {
       const pre = await api('/api/file?path=' + encodeURIComponent(currentFilePath));
       await saveBackup(currentFilePath, pre.content, getUsername());
@@ -171,7 +171,8 @@ async function renderHistoryPanel() {
     html += '<div class="file-history-meta">';
     html += '<span class="file-history-when">' + esc(when) + '</span>';
     html += '<span class="file-history-who">by ' + who + '</span>';
-    html += '<span class="file-history-size">' + b.size + ' bytes</span>';
+    const sizeBytes = typeof b.size === 'number' ? b.size : 0;
+    html += '<span class="file-history-size">' + sizeBytes + ' bytes</span>';
     html += '</div>';
     html += '<button class="file-history-restore" data-id="' + esc(b.id) + '">Restore into editor</button>';
     html += '</li>';
@@ -191,7 +192,13 @@ async function restoreBackup(id, path) {
     showToast('Open a file first', 'error');
     return;
   }
-  const rec = await getBackup(id, path);
+  let rec;
+  try {
+    rec = await getBackup(id, path);
+  } catch (e) {
+    showToast('Could not load backup: ' + e.message, 'error');
+    return;
+  }
   if (!rec) { showToast('Backup not found', 'error'); return; }
   editor.value = rec.content;
   hideHistoryPanel();
