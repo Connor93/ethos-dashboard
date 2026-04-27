@@ -109,3 +109,50 @@ test('nextSequence ignores filenames whose prefix is not a 10-digit sequence', a
     assert.equal(await nextSequence(d), 8);
   });
 });
+
+import { readFile, readdir as readDir2 } from 'node:fs/promises';
+import { writeBackup } from './storage.js';
+
+test('writeBackup creates one JSON file with the right shape', async () => {
+  await withTmp(async (root) => {
+    const result = await writeBackup({
+      root,
+      path: 'config/admin.ini',
+      content: 'hello world',
+      username: 'alice',
+    });
+    assert.match(result.id, /^\d{10}_/);
+    assert.equal(typeof result.ts, 'number');
+
+    const dir = dirFor(root, 'config/admin.ini');
+    const files = await readDir2(dir);
+    const jsons = files.filter(f => f.endsWith('.json'));
+    assert.equal(jsons.length, 1);
+
+    const rec = JSON.parse(await readFile(pjoin(dir, jsons[0]), 'utf8'));
+    assert.equal(rec.path, 'config/admin.ini');
+    assert.equal(rec.content, 'hello world');
+    assert.equal(rec.username, 'alice');
+    assert.equal(rec.size, 'hello world'.length);
+    assert.match(rec.sha, /^[0-9a-f]{40}$/);
+    assert.equal(rec.id, result.id);
+    assert.equal(rec.ts, result.ts);
+  });
+});
+
+test('writeBackup writes a path file for human inspection', async () => {
+  await withTmp(async (root) => {
+    await writeBackup({ root, path: 'data/notes.txt', content: 'x', username: 'bob' });
+    const dir = dirFor(root, 'data/notes.txt');
+    const pathFile = await readFile(pjoin(dir, 'path'), 'utf8');
+    assert.equal(pathFile, 'data/notes.txt');
+  });
+});
+
+test('writeBackup leaves no .tmp file behind on success', async () => {
+  await withTmp(async (root) => {
+    await writeBackup({ root, path: 'data/notes.txt', content: 'x', username: 'bob' });
+    const files = await readDir2(dirFor(root, 'data/notes.txt'));
+    assert.equal(files.filter(f => f.endsWith('.tmp')).length, 0);
+  });
+});

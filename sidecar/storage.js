@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
-import { readdir } from 'node:fs/promises';
+import { readdir, writeFile, rename, mkdir } from 'node:fs/promises';
 
 export function pathHash(path) {
   return createHash('sha1').update(path).digest('hex').slice(0, 16);
@@ -49,4 +49,49 @@ export async function nextSequence(dir) {
     if (seq > max) max = seq;
   }
   return max + 1;
+}
+
+function pad10(n) {
+  return String(n).padStart(10, '0');
+}
+
+function isoFsSafe(d) {
+  return d.toISOString().replace(/[:.]/g, '-');
+}
+
+function sha1Hex(text) {
+  return createHash('sha1').update(text).digest('hex');
+}
+
+export async function writeBackup({ root, path, content, username }) {
+  validatePath(path);
+  if (typeof content !== 'string') throw new Error('content must be a string');
+  if (typeof username !== 'string' || username.length === 0) {
+    throw new Error('username must be a non-empty string');
+  }
+
+  const dir = dirFor(root, path);
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, 'path'), path);
+
+  const seq = await nextSequence(dir);
+  const ts = Date.now();
+  const id = `${pad10(seq)}_${isoFsSafe(new Date(ts))}`;
+  const sha = sha1Hex(content);
+  const record = {
+    id,
+    path,
+    ts,
+    username,
+    size: content.length,
+    sha,
+    content,
+  };
+
+  const finalPath = join(dir, `${id}.json`);
+  const tmpPath = `${finalPath}.tmp`;
+  await writeFile(tmpPath, JSON.stringify(record));
+  await rename(tmpPath, finalPath);
+
+  return { id, ts };
 }
