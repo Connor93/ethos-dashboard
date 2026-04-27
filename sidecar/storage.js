@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
-import { readdir, writeFile, rename, mkdir } from 'node:fs/promises';
+import { readdir, readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 
 export function pathHash(path) {
   return createHash('sha1').update(path).digest('hex').slice(0, 16);
@@ -82,17 +82,22 @@ export async function writeBackup({ root, path, content, username }) {
     if (e.code !== 'EEXIST') throw e;
   }
 
+  const incomingSha = sha1Hex(content);
+  const newest = await newestRecord(dir);
+  if (newest && newest.sha === incomingSha) {
+    return { id: newest.id, ts: newest.ts };
+  }
+
   const seq = await nextSequence(dir);
   const ts = Date.now();
   const id = `${pad10(seq)}_${isoFsSafe(new Date(ts))}`;
-  const sha = sha1Hex(content);
   const record = {
     id,
     path,
     ts,
     username,
     size: Buffer.byteLength(content, 'utf8'),
-    sha,
+    sha: incomingSha,
     content,
   };
 
@@ -102,4 +107,18 @@ export async function writeBackup({ root, path, content, username }) {
   await rename(tmpPath, finalPath);
 
   return { id, ts };
+}
+
+async function newestRecord(dir) {
+  let entries;
+  try {
+    entries = await readdir(dir);
+  } catch (e) {
+    if (e.code === 'ENOENT') return null;
+    throw e;
+  }
+  const jsons = entries.filter(f => f.endsWith('.json')).sort();
+  if (!jsons.length) return null;
+  const newest = jsons[jsons.length - 1];
+  return JSON.parse(await readFile(join(dir, newest), 'utf8'));
 }

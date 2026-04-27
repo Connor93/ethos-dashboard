@@ -181,3 +181,22 @@ test('writeBackup does not rewrite the path file on subsequent saves', async () 
     assert.equal(first.mtimeMs, second.mtimeMs);
   });
 });
+
+test('writeBackup dedups identical successive content', async () => {
+  await withTmp(async (root) => {
+    const a = await writeBackup({ root, path: 'config/x.ini', content: 'same', username: 'alice' });
+    const b = await writeBackup({ root, path: 'config/x.ini', content: 'same', username: 'bob' });
+    assert.equal(a.id, b.id);
+    const files = await readDir2(dirFor(root, 'config/x.ini'));
+    assert.equal(files.filter(f => f.endsWith('.json')).length, 1);
+  });
+});
+
+test('writeBackup writes a new record when content changes', async () => {
+  await withTmp(async (root) => {
+    await writeBackup({ root, path: 'config/x.ini', content: 'one', username: 'alice' });
+    await writeBackup({ root, path: 'config/x.ini', content: 'two', username: 'alice' });
+    const files = await readDir2(dirFor(root, 'config/x.ini'));
+    assert.equal(files.filter(f => f.endsWith('.json')).length, 2);
+  });
+});
