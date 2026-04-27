@@ -72,7 +72,15 @@ export async function writeBackup({ root, path, content, username }) {
 
   const dir = dirFor(root, path);
   await mkdir(dir, { recursive: true });
-  await writeFile(join(dir, 'path'), path);
+
+  // Write the human-readable `path` debug file only the first time we touch
+  // this directory. Subsequent saves don't need to rewrite it (same content)
+  // and avoiding the syscall keeps the dir's first-created-ish timestamp.
+  try {
+    await writeFile(join(dir, 'path'), path, { flag: 'wx' });
+  } catch (e) {
+    if (e.code !== 'EEXIST') throw e;
+  }
 
   const seq = await nextSequence(dir);
   const ts = Date.now();
@@ -83,7 +91,7 @@ export async function writeBackup({ root, path, content, username }) {
     path,
     ts,
     username,
-    size: content.length,
+    size: Buffer.byteLength(content, 'utf8'),
     sha,
     content,
   };

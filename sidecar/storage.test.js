@@ -156,3 +156,28 @@ test('writeBackup leaves no .tmp file behind on success', async () => {
     assert.equal(files.filter(f => f.endsWith('.tmp')).length, 0);
   });
 });
+
+test('writeBackup records size in UTF-8 bytes, not UTF-16 code units', async () => {
+  await withTmp(async (root) => {
+    // 'café' is 4 chars but 5 bytes in UTF-8 ('é' = 2 bytes).
+    await writeBackup({ root, path: 'config/u.ini', content: 'café', username: 'alice' });
+    const dir = dirFor(root, 'config/u.ini');
+    const files = (await readDir2(dir)).filter(f => f.endsWith('.json'));
+    const rec = JSON.parse(await readFile(pjoin(dir, files[0]), 'utf8'));
+    assert.equal(rec.size, 5);
+  });
+});
+
+test('writeBackup does not rewrite the path file on subsequent saves', async () => {
+  await withTmp(async (root) => {
+    await writeBackup({ root, path: 'config/p.ini', content: 'one', username: 'alice' });
+    const dir = dirFor(root, 'config/p.ini');
+    const pathFile = pjoin(dir, 'path');
+    const { stat } = await import('node:fs/promises');
+    const first = await stat(pathFile);
+    await new Promise(r => setTimeout(r, 20));   // ensure mtime would differ if rewritten
+    await writeBackup({ root, path: 'config/p.ini', content: 'two', username: 'alice' });
+    const second = await stat(pathFile);
+    assert.equal(first.mtimeMs, second.mtimeMs);
+  });
+});
