@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
-import { readdir, readFile, writeFile, rename, mkdir } from 'node:fs/promises';
+import { readdir, readFile, writeFile, rename, mkdir, unlink } from 'node:fs/promises';
 
 export function pathHash(path) {
   return createHash('sha1').update(path).digest('hex').slice(0, 16);
@@ -105,8 +105,27 @@ export async function writeBackup({ root, path, content, username }) {
   const tmpPath = `${finalPath}.tmp`;
   await writeFile(tmpPath, JSON.stringify(record));
   await rename(tmpPath, finalPath);
+  await enforceRetention(dir);
 
   return { id, ts };
+}
+
+const MAX_PER_PATH = 20;
+
+async function enforceRetention(dir) {
+  let entries;
+  try {
+    entries = await readdir(dir);
+  } catch (e) {
+    if (e.code === 'ENOENT') return;
+    throw e;
+  }
+  const jsons = entries.filter(f => f.endsWith('.json')).sort();   // ascending by sequence
+  if (jsons.length <= MAX_PER_PATH) return;
+  const toDelete = jsons.slice(0, jsons.length - MAX_PER_PATH);
+  for (const name of toDelete) {
+    await unlink(join(dir, name));
+  }
 }
 
 async function newestRecord(dir) {

@@ -219,3 +219,17 @@ test('writeBackup tolerates a corrupt newest record (writes new instead of faili
     assert.equal(after.length, 2);
   });
 });
+
+test('writeBackup caps retention at 20 newest per file', async () => {
+  await withTmp(async (root) => {
+    for (let i = 0; i < 22; i++) {
+      await writeBackup({ root, path: 'config/r.ini', content: `v${i}`, username: 'alice' });
+    }
+    const dir = dirFor(root, 'config/r.ini');
+    const files = (await readDir2(dir)).filter(f => f.endsWith('.json')).sort();
+    assert.equal(files.length, 20);
+    // Oldest two were v0 and v1 (sequence 1 and 2). They should be gone.
+    assert.equal(files[0].startsWith('0000000003_'), true);
+    assert.equal(files[19].startsWith('0000000022_'), true);
+  });
+});
