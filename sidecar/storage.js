@@ -29,3 +29,22 @@ export function validatePath(path) {
     }
   }
 }
+
+import { readdir } from 'node:fs/promises';
+
+export async function nextSequence(dir) {
+  let entries;
+  try {
+    entries = await readdir(dir);
+  } catch (e) {
+    if (e.code === 'ENOENT') return 1;
+    throw e;
+  }
+  let max = 0;
+  for (const name of entries) {
+    if (!name.endsWith('.json')) continue;          // skips .tmp and the `path` file
+    const seq = parseInt(name.slice(0, 10), 10);
+    if (Number.isFinite(seq) && seq > max) max = seq;
+  }
+  return max + 1;
+}

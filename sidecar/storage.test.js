@@ -50,3 +50,48 @@ test('validatePath rejects backslashes (defense-in-depth for cross-OS reads)', (
   assert.throws(() => validatePath('config\\admin.ini'));
   assert.throws(() => validatePath('config\\..\\etc\\passwd'));
 });
+
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join as pjoin } from 'node:path';
+import { nextSequence } from './storage.js';
+
+async function withTmp(fn) {
+  const dir = await mkdtemp(pjoin(tmpdir(), 'sidecar-test-'));
+  try { return await fn(dir); }
+  finally { await rm(dir, { recursive: true, force: true }); }
+}
+
+test('nextSequence returns 1 when directory does not exist', async () => {
+  await withTmp(async (root) => {
+    assert.equal(await nextSequence(pjoin(root, 'missing')), 1);
+  });
+});
+
+test('nextSequence returns 1 for an empty directory', async () => {
+  await withTmp(async (root) => {
+    await mkdir(pjoin(root, 'd'));
+    assert.equal(await nextSequence(pjoin(root, 'd')), 1);
+  });
+});
+
+test('nextSequence returns max+1 from existing files', async () => {
+  await withTmp(async (root) => {
+    const d = pjoin(root, 'd');
+    await mkdir(d);
+    await writeFile(pjoin(d, '0000000001_foo.json'), '{}');
+    await writeFile(pjoin(d, '0000000005_foo.json'), '{}');
+    await writeFile(pjoin(d, 'path'), 'config/admin.ini');
+    assert.equal(await nextSequence(d), 6);
+  });
+});
+
+test('nextSequence ignores .tmp files', async () => {
+  await withTmp(async (root) => {
+    const d = pjoin(root, 'd');
+    await mkdir(d);
+    await writeFile(pjoin(d, '0000000001_foo.json'), '{}');
+    await writeFile(pjoin(d, '0000000099_foo.json.tmp'), '{}');
+    assert.equal(await nextSequence(d), 2);
+  });
+});
