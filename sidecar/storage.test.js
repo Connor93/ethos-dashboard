@@ -233,3 +233,38 @@ test('writeBackup caps retention at 20 newest per file', async () => {
     assert.equal(files[19].startsWith('0000000022_'), true);
   });
 });
+
+import { listBackups as listB } from './storage.js';
+
+test('listBackups returns [] for an unknown path', async () => {
+  await withTmp(async (root) => {
+    const out = await listB({ root, path: 'config/unknown.ini' });
+    assert.deepEqual(out, []);
+  });
+});
+
+test('listBackups returns metadata only, newest first', async () => {
+  await withTmp(async (root) => {
+    await writeBackup({ root, path: 'config/l.ini', content: 'v1', username: 'alice' });
+    await writeBackup({ root, path: 'config/l.ini', content: 'v2', username: 'bob' });
+    const out = await listB({ root, path: 'config/l.ini' });
+    assert.equal(out.length, 2);
+    assert.equal(out[0].username, 'bob');             // newest first
+    assert.equal(out[1].username, 'alice');
+    assert.equal(out[0].content, undefined);          // metadata only
+    assert.equal(typeof out[0].id, 'string');
+    assert.equal(typeof out[0].ts, 'number');
+    assert.equal(typeof out[0].size, 'number');
+    assert.equal(typeof out[0].sha, 'string');
+  });
+});
+
+test('listBackups ignores .tmp and the path file', async () => {
+  await withTmp(async (root) => {
+    await writeBackup({ root, path: 'config/l.ini', content: 'v1', username: 'alice' });
+    const dir = dirFor(root, 'config/l.ini');
+    await writeFileFs(pjoin(dir, '0000000099_x.json.tmp'), 'garbage');
+    const out = await listB({ root, path: 'config/l.ini' });
+    assert.equal(out.length, 1);
+  });
+});

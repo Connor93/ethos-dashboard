@@ -128,6 +128,35 @@ async function enforceRetention(dir) {
   }
 }
 
+export async function listBackups({ root, path }) {
+  validatePath(path);
+  const dir = dirFor(root, path);
+  let entries;
+  try {
+    entries = await readdir(dir);
+  } catch (e) {
+    if (e.code === 'ENOENT') return [];
+    throw e;
+  }
+  const jsons = entries.filter(f => f.endsWith('.json')).sort().reverse();   // newest first
+  const out = [];
+  for (const name of jsons.slice(0, MAX_PER_PATH)) {
+    try {
+      const rec = JSON.parse(await readFile(join(dir, name), 'utf8'));
+      out.push({
+        id: rec.id,
+        ts: rec.ts,
+        username: rec.username,
+        size: rec.size,
+        sha: rec.sha,
+      });
+    } catch {
+      // ignore unreadable record; corruption shouldn't take down the whole list
+    }
+  }
+  return out;
+}
+
 async function newestRecord(dir) {
   let entries;
   try {
