@@ -74,6 +74,7 @@ export async function writeBackup({ root, path, content, username }) {
 
   const dir = dirFor(root, path);
   await mkdir(dir, { recursive: true });
+  await cleanupTmp(dir);
 
   // Write the human-readable `path` debug file only the first time we touch
   // this directory. Subsequent saves don't need to rewrite it (same content)
@@ -110,6 +111,19 @@ export async function writeBackup({ root, path, content, username }) {
   await enforceRetention(dir);
 
   return { id, ts };
+}
+
+async function cleanupTmp(dir) {
+  let entries;
+  try { entries = await readdir(dir); } catch (e) {
+    if (e.code === 'ENOENT') return;
+    throw e;
+  }
+  for (const name of entries) {
+    if (name.endsWith('.tmp')) {
+      try { await unlink(join(dir, name)); } catch { /* best effort */ }
+    }
+  }
 }
 
 async function enforceRetention(dir) {

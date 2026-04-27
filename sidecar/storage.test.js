@@ -306,3 +306,16 @@ test('getBackup rejects an id that contains a path separator', async () => {
     );
   });
 });
+
+test('writeBackup cleans up stale .tmp files in the dir', async () => {
+  await withTmp(async (root) => {
+    const dir = dirFor(root, 'config/c.ini');
+    await mkdir(dir, { recursive: true });
+    await writeFileFs(pjoin(dir, '0000000099_zombie.json.tmp'), 'leftover');
+
+    await writeBackup({ root, path: 'config/c.ini', content: 'fresh', username: 'alice' });
+
+    const files = await readDir2(dir);
+    assert.equal(files.filter(f => f.endsWith('.tmp')).length, 0);
+  });
+});
