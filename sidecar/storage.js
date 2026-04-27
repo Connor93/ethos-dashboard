@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
+import { readdir } from 'node:fs/promises';
 
 export function pathHash(path) {
   return createHash('sha1').update(path).digest('hex').slice(0, 16);
@@ -30,8 +31,6 @@ export function validatePath(path) {
   }
 }
 
-import { readdir } from 'node:fs/promises';
-
 export async function nextSequence(dir) {
   let entries;
   try {
@@ -42,9 +41,12 @@ export async function nextSequence(dir) {
   }
   let max = 0;
   for (const name of entries) {
-    if (!name.endsWith('.json')) continue;          // skips .tmp and the `path` file
-    const seq = parseInt(name.slice(0, 10), 10);
-    if (Number.isFinite(seq) && seq > max) max = seq;
+    // Strict match: 10-digit zero-padded sequence followed by `_`, ending in `.json`.
+    // Anything else (path file, .tmp leftovers, malformed names) is ignored.
+    const match = /^(\d{10})_.*\.json$/.exec(name);
+    if (!match) continue;
+    const seq = parseInt(match[1], 10);
+    if (seq > max) max = seq;
   }
   return max + 1;
 }

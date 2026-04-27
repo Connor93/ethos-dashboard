@@ -95,3 +95,17 @@ test('nextSequence ignores .tmp files', async () => {
     assert.equal(await nextSequence(d), 2);
   });
 });
+
+test('nextSequence ignores filenames whose prefix is not a 10-digit sequence', async () => {
+  await withTmp(async (root) => {
+    const d = pjoin(root, 'd');
+    await mkdir(d);
+    // Short numeric prefix (1 digit) — must NOT be treated as sequence 1.
+    await writeFile(pjoin(d, '1_foo.json'), '{}');
+    // Non-numeric prefix.
+    await writeFile(pjoin(d, 'abcdefghij_foo.json'), '{}');
+    // Valid 10-digit name to anchor the result.
+    await writeFile(pjoin(d, '0000000007_foo.json'), '{}');
+    assert.equal(await nextSequence(d), 8);
+  });
+});
