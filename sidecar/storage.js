@@ -120,5 +120,12 @@ async function newestRecord(dir) {
   const jsons = entries.filter(f => f.endsWith('.json')).sort();
   if (!jsons.length) return null;
   const newest = jsons[jsons.length - 1];
-  return JSON.parse(await readFile(join(dir, newest), 'utf8'));
+  try {
+    return JSON.parse(await readFile(join(dir, newest), 'utf8'));
+  } catch {
+    // Treat unreadable / malformed records as "no usable newest" so a save
+    // is never lost just because a prior file is corrupt. The new write
+    // gets a fresh sequence number and the bad file lingers harmlessly.
+    return null;
+  }
 }

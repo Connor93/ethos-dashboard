@@ -51,7 +51,7 @@ test('validatePath rejects backslashes (defense-in-depth for cross-OS reads)', (
   assert.throws(() => validatePath('config\\..\\etc\\passwd'));
 });
 
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile as writeFileFs, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join as pjoin } from 'node:path';
 import { nextSequence } from './storage.js';
@@ -79,9 +79,9 @@ test('nextSequence returns max+1 from existing files', async () => {
   await withTmp(async (root) => {
     const d = pjoin(root, 'd');
     await mkdir(d);
-    await writeFile(pjoin(d, '0000000001_foo.json'), '{}');
-    await writeFile(pjoin(d, '0000000005_foo.json'), '{}');
-    await writeFile(pjoin(d, 'path'), 'config/admin.ini');
+    await writeFileFs(pjoin(d, '0000000001_foo.json'), '{}');
+    await writeFileFs(pjoin(d, '0000000005_foo.json'), '{}');
+    await writeFileFs(pjoin(d, 'path'), 'config/admin.ini');
     assert.equal(await nextSequence(d), 6);
   });
 });
@@ -90,8 +90,8 @@ test('nextSequence ignores .tmp files', async () => {
   await withTmp(async (root) => {
     const d = pjoin(root, 'd');
     await mkdir(d);
-    await writeFile(pjoin(d, '0000000001_foo.json'), '{}');
-    await writeFile(pjoin(d, '0000000099_foo.json.tmp'), '{}');
+    await writeFileFs(pjoin(d, '0000000001_foo.json'), '{}');
+    await writeFileFs(pjoin(d, '0000000099_foo.json.tmp'), '{}');
     assert.equal(await nextSequence(d), 2);
   });
 });
@@ -101,11 +101,11 @@ test('nextSequence ignores filenames whose prefix is not a 10-digit sequence', a
     const d = pjoin(root, 'd');
     await mkdir(d);
     // Short numeric prefix (1 digit) — must NOT be treated as sequence 1.
-    await writeFile(pjoin(d, '1_foo.json'), '{}');
+    await writeFileFs(pjoin(d, '1_foo.json'), '{}');
     // Non-numeric prefix.
-    await writeFile(pjoin(d, 'abcdefghij_foo.json'), '{}');
+    await writeFileFs(pjoin(d, 'abcdefghij_foo.json'), '{}');
     // Valid 10-digit name to anchor the result.
-    await writeFile(pjoin(d, '0000000007_foo.json'), '{}');
+    await writeFileFs(pjoin(d, '0000000007_foo.json'), '{}');
     assert.equal(await nextSequence(d), 8);
   });
 });
@@ -198,5 +198,24 @@ test('writeBackup writes a new record when content changes', async () => {
     await writeBackup({ root, path: 'config/x.ini', content: 'two', username: 'alice' });
     const files = await readDir2(dirFor(root, 'config/x.ini'));
     assert.equal(files.filter(f => f.endsWith('.json')).length, 2);
+  });
+});
+
+test('writeBackup tolerates a corrupt newest record (writes new instead of failing)', async () => {
+  await withTmp(async (root) => {
+    // Seed one valid backup.
+    await writeBackup({ root, path: 'config/c.ini', content: 'first', username: 'alice' });
+    const dir = dirFor(root, 'config/c.ini');
+
+    // Overwrite the newest .json with garbage to simulate corruption.
+    const files = (await readDir2(dir)).filter(f => f.endsWith('.json')).sort();
+    const newest = files[files.length - 1];
+    await writeFileFs(pjoin(dir, newest), '{not valid json');
+
+    // A subsequent save must succeed (not throw) and produce a new file.
+    const result = await writeBackup({ root, path: 'config/c.ini', content: 'second', username: 'alice' });
+    assert.match(result.id, /^\d{10}_/);
+    const after = (await readDir2(dir)).filter(f => f.endsWith('.json'));
+    assert.equal(after.length, 2);
   });
 });
