@@ -40,6 +40,13 @@ test('validatePath rejects null bytes', () => {
   assert.throws(() => validatePath('config\u0000admin.ini'));
 });
 
-test('validatePath rejects empty string', () => {
+test('validatePath rejects empty string, null, and undefined', () => {
   assert.throws(() => validatePath(''));
+  assert.throws(() => validatePath(null));
+  assert.throws(() => validatePath(undefined));
+});
+
+test('validatePath rejects backslashes (defense-in-depth for cross-OS reads)', () => {
+  assert.throws(() => validatePath('config\\admin.ini'));
+  assert.throws(() => validatePath('config\\..\\etc\\passwd'));
 });

@@ -16,6 +16,9 @@ export function validatePath(path) {
   if (path.includes('\u0000')) {
     throw new Error('path contains null byte');
   }
+  if (path.includes('\\')) {
+    throw new Error('path contains backslash');
+  }
   if (path.startsWith('/')) {
     throw new Error('path must be relative');
   }
