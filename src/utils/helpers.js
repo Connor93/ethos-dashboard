@@ -18,7 +18,8 @@ export function adminBadge(admin, level) {
 /** Player log category badge */
 export function plogCatBadge(cat) {
   let cls = '';
-  if (cat.indexOf('XP') >= 0) cls = 'xp';
+  if (cat.indexOf('BOSS') >= 0) cls = 'boss';
+  else if (cat.indexOf('XP') >= 0) cls = 'xp';
   else if (cat.indexOf('TRADE') >= 0) cls = 'trade';
   else if (
     cat.indexOf('ITEM') >= 0 || cat.indexOf('SHOP') >= 0 || cat.indexOf('BANK') >= 0 ||
