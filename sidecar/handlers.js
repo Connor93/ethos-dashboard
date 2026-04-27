@@ -41,5 +41,16 @@ export async function handleRequest({ storage, root }, req, res) {
     }
   }
 
+  if (req.method === 'GET' && pathname === '/backups') {
+    const path = params.get('path');
+    if (!path) return send(res, 400, { error: 'missing path' });
+    try {
+      const backups = await storage.listBackups({ root, path });
+      return send(res, 200, { backups });
+    } catch (e) {
+      return send(res, 500, { error: e.message });
+    }
+  }
+
   return send(res, 404, { error: 'not found' });
 }

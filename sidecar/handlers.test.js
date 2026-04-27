@@ -71,3 +71,24 @@ test('POST /backups returns 400 on invalid JSON', async () => {
   }), res);
   assert.equal(res.statusCode, 400);
 });
+
+test('GET /backups?path=… returns the list', async () => {
+  const storage = fakeStorage();
+  const res = fakeRes();
+  await handleRequest({ storage }, fakeReq({
+    method: 'GET',
+    url: '/backups?path=' + encodeURIComponent('config/admin.ini'),
+  }), res);
+  assert.equal(res.statusCode, 200);
+  const out = JSON.parse(res.body);
+  assert.equal(Array.isArray(out.backups), true);
+  assert.equal(out.backups.length, 1);
+  assert.deepEqual(storage.calls[0], ['list', { root: undefined, path: 'config/admin.ini' }]);
+});
+
+test('GET /backups returns 400 when path is missing', async () => {
+  const storage = fakeStorage();
+  const res = fakeRes();
+  await handleRequest({ storage }, fakeReq({ method: 'GET', url: '/backups' }), res);
+  assert.equal(res.statusCode, 400);
+});
