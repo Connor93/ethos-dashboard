@@ -160,6 +160,21 @@ export async function listBackups({ root, path }) {
   return out;
 }
 
+export async function getBackup({ root, path, id }) {
+  validatePath(path);
+  if (typeof id !== 'string' || id.length === 0) throw new Error('invalid id');
+  if (id.includes('/') || id.includes('\\') || id.includes('..') || id.includes('\u0000')) {
+    throw new Error('invalid id');
+  }
+  const file = join(dirFor(root, path), `${id}.json`);
+  try {
+    return JSON.parse(await readFile(file, 'utf8'));
+  } catch (e) {
+    if (e.code === 'ENOENT') return null;
+    throw e;
+  }
+}
+
 async function newestRecord(dir) {
   let entries;
   try {

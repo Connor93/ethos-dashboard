@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pathHash, dirFor, validatePath, nextSequence, writeBackup, listBackups as listB } from './storage.js';
+import { pathHash, dirFor, validatePath, nextSequence, writeBackup, listBackups as listB, getBackup as getB } from './storage.js';
 
 test('pathHash returns 16 hex chars', () => {
   const h = pathHash('config/admin.ini');
@@ -277,5 +277,32 @@ test('listBackups skips records with missing required fields', async () => {
     const out = await listB({ root, path: 'config/m.ini' });
     assert.equal(out.length, 1);
     assert.equal(out[0].username, 'alice');
+  });
+});
+
+test('getBackup returns the full record including content', async () => {
+  await withTmp(async (root) => {
+    const w = await writeBackup({ root, path: 'config/g.ini', content: 'payload', username: 'alice' });
+    const rec = await getB({ root, path: 'config/g.ini', id: w.id });
+    assert.equal(rec.content, 'payload');
+    assert.equal(rec.id, w.id);
+    assert.equal(rec.username, 'alice');
+  });
+});
+
+test('getBackup returns null for a missing id', async () => {
+  await withTmp(async (root) => {
+    await writeBackup({ root, path: 'config/g.ini', content: 'x', username: 'alice' });
+    const rec = await getB({ root, path: 'config/g.ini', id: '0000000099_does-not-exist' });
+    assert.equal(rec, null);
+  });
+});
+
+test('getBackup rejects an id that contains a path separator', async () => {
+  await withTmp(async (root) => {
+    await assert.rejects(
+      () => getB({ root, path: 'config/g.ini', id: '../other/0000000001_x' }),
+      /invalid id/i
+    );
   });
 });
