@@ -67,7 +67,7 @@ a:hover{text-decoration:underline}
 .header-meta .meta-value{color:var(--accent-light);font-weight:600}
 
 /* Content */
-.content{padding:24px 28px;overflow-y:auto;max-height:calc(100vh - 60px)}
+.content{padding:24px 28px;overflow-y:auto;max-height:calc(100vh - 60px);max-height:calc(100dvh - 60px)}
 
 /* Cards */
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
@@ -202,7 +202,7 @@ tr.clickable:hover td{background:rgba(99,102,241,.08)}
 .announce-box button:hover{background:#fbbf24;transform:translateY(-1px)}
 
 /* File Editor */
-.files-layout{display:grid;grid-template-columns:240px 1fr;gap:16px;height:calc(100vh - 140px);overflow:hidden}
+.files-layout{display:grid;grid-template-columns:240px 1fr;gap:16px;height:calc(100vh - 140px);height:calc(100dvh - 140px);overflow:hidden}
 .file-tree{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow-y:auto;padding:8px 0}
 .file-tree-group{margin-bottom:4px}
 .file-tree-label{padding:8px 16px;font-size:.75rem;text-transform:uppercase;letter-spacing:.8px;
@@ -219,9 +219,10 @@ tr.clickable:hover td{background:rgba(99,102,241,.08)}
   border-radius:var(--radius);overflow:hidden;min-height:0}
 .file-editor{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column}
 .file-editor-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;
-  justify-content:space-between;align-items:center;background:rgba(0,0,0,.1);flex-shrink:0}
-.file-editor-header .file-name{font-size:.9rem;font-weight:600;color:var(--accent-light)}
-.file-editor-header .file-actions{display:flex;gap:8px}
+  justify-content:space-between;align-items:center;background:rgba(0,0,0,.1);flex-shrink:0;gap:10px;min-width:0}
+.file-editor-header .file-name{font-size:.9rem;font-weight:600;color:var(--accent-light);
+  flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left;cursor:help}
+.file-editor-header .file-actions{display:flex;gap:8px;flex-shrink:0}
 .file-editor-header button{padding:6px 16px;border:none;border-radius:6px;cursor:pointer;
   font-family:inherit;font-weight:600;font-size:.8rem;transition:all .15s}
 .file-editor-header .save-btn{background:var(--success);color:#fff}
@@ -392,10 +393,64 @@ td.plog-cat{white-space:nowrap}
   .cards{grid-template-columns:repeat(2,1fr);gap:10px}
   .card-value{font-size:1.4rem}
 
-  .files-layout{grid-template-columns:1fr;height:auto}
-  .file-tree{max-height:200px}
+  /* Files tab: stack tree above editor and let the editor consume the rest
+     of the viewport. Tree caps at ~30dvh and scrolls; editor takes whatever
+     remains. The earlier `height:auto` collapsed the editor to its content,
+     leaving a tiny editing surface on phones. */
+  .files-layout{grid-template-columns:1fr;grid-template-rows:minmax(120px,30dvh) 1fr;
+    height:calc(100vh - 100px);height:calc(100dvh - 100px);gap:10px}
+  .file-tree{max-height:none;height:100%;overflow-y:auto}
+  .file-editor-pane{min-height:0}
+  .file-editor textarea{min-height:200px}
+  /* Header wraps when needed so the action buttons stay visible regardless
+     of filename length. Buttons drop to a tighter padding for phone use. */
+  .file-editor-header{flex-wrap:wrap;padding:10px 12px;row-gap:8px}
+  .file-editor-header .file-name{flex-basis:100%;min-width:0}
+  .file-editor-header button{padding:6px 12px;font-size:.8rem}
 
   .chat-panel{height:auto;min-height:300px}
+
+  /* Pub editor on phones. Force a single-column stack: type tabs scroll
+     horizontally on one line, action buttons go in a tidy 2-up grid, list
+     and editor pane stack vertically. The grid !important is paranoia
+     against any later cascade re-introducing the desktop two-column. */
+  .pub-editor-root{height:calc(100vh - 80px);height:calc(100dvh - 80px);gap:8px}
+
+  .pub-toolbar{flex-direction:column;align-items:stretch;gap:8px}
+
+  /* Type tabs: keep on one line, scroll horizontally so we don't waste
+     vertical space stacking them. Hide the scrollbar visually. */
+  .pub-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .pub-tabs::-webkit-scrollbar{display:none}
+  .pub-tab{flex:0 0 auto;padding:7px 10px;font-size:.8rem}
+  .pub-tab-key{display:none}
+
+  /* Action buttons: 2x2 (or 2x3) grid so each is a comfortable tap target
+     instead of stacking into one tall column or wrapping into a half-row
+     ragged mess. The dirty count spans the row above when present. */
+  .pub-toolbar-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .pub-toolbar-actions .cmd-btn{padding:10px 12px;font-size:.85rem;min-height:44px;
+    text-align:center;display:flex;align-items:center;justify-content:center}
+  .pub-dirty-count{grid-column:1 / -1;text-align:center;padding:4px 0}
+
+  /* Layout: stacked, not side-by-side. The list takes the top ~35dvh so
+     it's tall enough to scan and tap; the editor takes the rest. */
+  .pub-layout{grid-template-columns:1fr !important;grid-template-rows:minmax(160px,35dvh) 1fr;gap:8px;min-height:0}
+  .pub-list-pane{min-height:0}
+  .pub-editor-pane{min-height:0;padding:12px}
+
+  /* Field grid 2-up by default; compact stat clusters get 3-up. */
+  .pub-field-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .pub-field-grid-compact{grid-template-columns:repeat(3,1fr);gap:6px}
+  .pub-section{padding:10px}
+
+  /* Graphic picker modal: take most of the screen instead of 760px wide. */
+  .pub-graphic-picker-modal{width:96vw;max-height:90dvh}
+  .pub-gp-body{max-height:60dvh}
+  .pub-gp-grid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px}
+
+  /* Conflict & backups modals: don't enforce desktop minimums. */
+  .pub-conflict-modal,.pub-backups-panel{width:auto}
 
   .config-grid{grid-template-columns:1fr}
 
@@ -415,8 +470,8 @@ td.plog-cat{white-space:nowrap}
   .chat-input-bar{flex-direction:column}
   .chat-char-select{min-width:0;width:100%}
 
-  .modal{min-width:0;width:90vw;padding:16px}
-  .confirm-dialog{min-width:0;width:90vw}
+  .modal{min-width:0;width:94vw;padding:16px;max-height:90dvh;overflow-y:auto}
+  .confirm-dialog{min-width:0;width:94vw}
 
   .announce-row{flex-direction:column}
   .announce-box button{width:100%}
@@ -431,6 +486,10 @@ td.plog-cat{white-space:nowrap}
 @media(max-width:400px){
   .cards{grid-template-columns:1fr}
   .header-meta{display:none}
+  .pub-field-grid{grid-template-columns:1fr}
+  .pub-field-grid-compact{grid-template-columns:repeat(2,1fr)}
+  .pub-list-toolbar{flex-direction:column;align-items:stretch}
+  .pub-list-toolbar input{width:100%}
 }
 
 /* Bot Alerts */
@@ -489,7 +548,7 @@ td.plog-cat{white-space:nowrap}
 /* =============================================
    Pub Editor
    ============================================= */
-.pub-editor-root{display:flex;flex-direction:column;gap:12px;height:calc(100vh - 100px)}
+.pub-editor-root{display:flex;flex-direction:column;gap:12px;height:calc(100vh - 100px);height:calc(100dvh - 100px)}
 .pub-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .pub-tab{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);
   color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:.85rem;font-weight:500;transition:all .15s;display:flex;gap:8px;align-items:center}

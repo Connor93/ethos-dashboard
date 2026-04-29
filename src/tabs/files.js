@@ -67,7 +67,9 @@ async function openFile(el, path) {
   document.querySelectorAll('.file-tree-item').forEach(i => i.classList.remove('active'));
   el.classList.add('active');
   currentFilePath = path;
-  document.getElementById('editorFileName').textContent = path;
+  const nameEl = document.getElementById('editorFileName');
+  nameEl.textContent = path;
+  nameEl.title = path; // tooltip shows the full path when the CSS truncates it
   document.getElementById('fileEditorArea').innerHTML = '<div class="file-editor-empty">Loading...</div>';
   hideHistoryPanel();
   try {
