@@ -17,6 +17,7 @@ import { initPlayerLogs, stopPlogPolling } from './tabs/player-logs.js';
 import { initAuditTab } from './tabs/audit.js';
 import { loadMaterialTrader } from './tabs/material-trader.js';
 import { initAlertsTab } from './tabs/alerts.js';
+import { initPubEditor } from './tabs/pub-editor/index.js';
 import { startLogPolling } from './tabs/overview.js';
 
 let refreshTimer = null;
@@ -132,6 +133,7 @@ function initNavigation() {
       if (tab === 'audit') initAuditTab();
       if (tab === 'materialtrader') loadMaterialTrader();
       if (tab === 'alerts') initAlertsTab();
+      if (tab === 'pubeditor') initPubEditor();
     });
   });
 }

@@ -49,6 +49,7 @@
       <div class="nav-item" data-tab="materialtrader"><span class="icon">&#x1F4B0;</span> Material Trader</div>
       <div class="nav-item" data-tab="audit"><span class="icon">&#x1F6A8;</span> Log Audit</div>
       <div class="nav-item" data-tab="alerts"><span class="icon">&#x1F916;</span> Bot Alerts</div>
+      <div class="nav-item" data-tab="pubeditor"><span class="icon">&#x1F4DA;</span> Pub Editor</div>
     </div>
     <div class="sidebar-footer">
       <div class="user">Logged in as <strong id="currentUser">-</strong></div>
@@ -366,6 +367,32 @@
         <button id="alertNext" disabled>Next &#x276F;</button>
       </div>
     </div>
+
+    <!-- Pub Editor Tab -->
+    <div id="tab-pubeditor" class="tab-content">
+      <div id="pubEditorRoot" class="pub-editor-root">
+        <div class="loading-placeholder">Loading pub editor...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pub Editor: Conflict Resolution Modal (skeleton — wired up in Phase 5) -->
+<div id="pubConflictModal" class="modal-overlay" style="display:none">
+  <div class="modal pub-conflict-modal">
+    <h3><span>Save conflict</span><button class="close-btn" id="pubConflictCloseBtn">&times;</button></h3>
+    <div id="pubConflictBody"></div>
+  </div>
+</div>
+
+<!-- Pub Editor: Graphic Picker Modal -->
+<div id="pubGraphicPickerModal" class="modal-overlay" style="display:none">
+  <div class="modal pub-graphic-picker-modal">
+    <h3><span id="pubGraphicPickerTitle">Pick a graphic</span><button class="close-btn" id="pubGraphicPickerCloseBtn">&times;</button></h3>
+    <div class="pub-gp-toolbar">
+      <input type="text" id="pubGraphicPickerFilter" placeholder="Filter by ID…">
+    </div>
+    <div id="pubGraphicPickerBody" class="pub-gp-body"></div>
   </div>
 </div>
 

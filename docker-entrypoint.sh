@@ -5,6 +5,12 @@ set -eu
 
 sed -i "s|ETHEOS_API_URL|${ETHEOS_API_URL}|g" /etc/nginx/conf.d/default.conf
 sed -i "s|ETHEOS_API_KEY|${ETHEOS_API_KEY}|g" /etc/nginx/conf.d/default.conf
+# Pub-editor GFX proxy. Both containers are on the shared `web` docker network,
+# so we can reach em-web-client directly via its container DNS name without
+# going through Traefik. Override WEBCLIENT_GFX_URL if the layout changes.
+# Note: em-web-client serves EGFs at /gfx/ (not /data/) — see its nginx.conf.
+WEBCLIENT_GFX_URL="${WEBCLIENT_GFX_URL:-http://em-web-client/gfx/}"
+sed -i "s|WEBCLIENT_GFX_URL|${WEBCLIENT_GFX_URL}|g" /etc/nginx/conf.d/default.conf
 
 # Ensure the volume directory exists and is writable
 mkdir -p /data/backups
