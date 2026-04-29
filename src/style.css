@@ -641,6 +641,9 @@ td.plog-cat{white-space:nowrap}
 
 .pub-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .pub-toolbar-actions{display:flex;align-items:center;gap:10px}
+/* Pin a uniform height so emoji vs non-emoji glyphs (with different
+   line-heights) don't make adjacent buttons look mismatched. */
+.pub-toolbar-actions .cmd-btn{min-height:38px;line-height:1.2;display:inline-flex;align-items:center;justify-content:center;gap:4px}
 .pub-dirty-count{color:var(--warning);font-size:.8rem;font-weight:600}
 .pub-tab-dirty{color:var(--warning);font-size:.6rem;line-height:1}
 

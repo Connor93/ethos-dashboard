@@ -33,7 +33,7 @@ export function initPubEditor() {
         <span class="pub-dirty-count" id="pubDirtyCount" hidden></span>
         <button class="cmd-btn" id="pubNewRecordBtn">&#x2795; New</button>
         <button class="cmd-btn" id="pubBackupsBtn">&#x1F551; Backups</button>
-        <button class="cmd-btn" id="pubReloadBtn">&#x21BB; Reload</button>
+        <button class="cmd-btn" id="pubReloadBtn">&#x1F504; Reload</button>
         <button class="cmd-btn" id="pubSaveBtn" disabled>&#x1F4BE; Save changes</button>
       </div>
     </div>
